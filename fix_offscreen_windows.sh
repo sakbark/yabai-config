@@ -1,47 +1,70 @@
 #!/usr/bin/env sh
 
-echo "🔍 Checking for off-screen windows..."
+# ═══════════════════════════════════════════════════════════════════════════
+# FIX OFFSCREEN WINDOWS - COMPREHENSIVE VERSION
+# ═══════════════════════════════════════════════════════════════════════════
+# Detects and fixes windows positioned offscreen (negative coordinates or
+# beyond display boundaries). Handles both tiled AND floating windows.
 
-# Get all displays and their dimensions
+echo "🔍 Scanning for offscreen windows..."
+
+# Get all displays and windows
 displays_json=$(yabai -m query --displays)
 windows_json=$(yabai -m query --windows)
 
 # Counter for found issues
-issues_found=0
+fixed_count=0
+skipped_count=0
 
-# Check each window
+# Get main display bounds as fallback safe zone
+main_display=$(echo "$displays_json" | jq '.[] | select(.index == 1)')
+safe_x=$(echo "$main_display" | jq -r '.frame.x + 100')
+safe_y=$(echo "$main_display" | jq -r '.frame.y + 100')
+
+# Check each window (using base64 to handle special characters)
 echo "$windows_json" | jq -r '.[] | @base64' | while IFS= read -r window_b64; do
-    window_info=$(echo "$window_b64" | base64 -d)
-    
+    window_info=$(echo "$window_b64" | base64 -d 2>/dev/null)
+
+    # Skip if decoding failed
+    [ -z "$window_info" ] && continue
+
     window_id=$(echo "$window_info" | jq -r '.id')
     window_x=$(echo "$window_info" | jq -r '.frame.x')
     window_y=$(echo "$window_info" | jq -r '.frame.y')
     window_w=$(echo "$window_info" | jq -r '.frame.w')
     window_h=$(echo "$window_info" | jq -r '.frame.h')
     window_display=$(echo "$window_info" | jq -r '.display')
-    window_space=$(echo "$window_info" | jq -r '.space')
     window_app=$(echo "$window_info" | jq -r '.app')
-    is_floating=$(echo "$window_info" | jq -r '.["is-floating"]')
-    is_minimized=$(echo "$window_info" | jq -r '.["is-minimized"]')
-    
-    # Skip floating and minimized windows
-    if [ "$is_floating" = "true" ] || [ "$is_minimized" = "true" ]; then
+    is_floating=$(echo "$window_info" | jq -r '."is-floating"')
+    is_minimized=$(echo "$window_info" | jq -r '."is-minimized"')
+    is_sticky=$(echo "$window_info" | jq -r '."is-sticky"')
+    can_move=$(echo "$window_info" | jq -r '."can-move"')
+    window_role=$(echo "$window_info" | jq -r '.role')
+
+    # Skip minimized windows
+    if [ "$is_minimized" = "true" ]; then
         continue
     fi
-    
+
+    # Skip windows that can't be moved
+    if [ "$can_move" = "false" ]; then
+        continue
+    fi
+
     # Get display dimensions for this window's display
     display_info=$(echo "$displays_json" | jq ".[] | select(.index == $window_display)")
     if [ -z "$display_info" ] || [ "$display_info" = "null" ]; then
-        echo "⚠️  Window $window_id ($window_app) has invalid display reference"
+        echo "⚠️  $window_app (ID: $window_id) - invalid display reference"
+        skipped_count=$((skipped_count + 1))
         continue
     fi
-    
+
     display_x=$(echo "$display_info" | jq -r '.frame.x')
     display_y=$(echo "$display_info" | jq -r '.frame.y')
     display_w=$(echo "$display_info" | jq -r '.frame.w')
     display_h=$(echo "$display_info" | jq -r '.frame.h')
-    
-    # Calculate window bounds (convert floating point to integer)
+
+    # Convert to integers
     window_x=$(printf "%.0f" "$window_x")
     window_y=$(printf "%.0f" "$window_y")
     window_w=$(printf "%.0f" "$window_w")
@@ -50,72 +73,87 @@ echo "$windows_json" | jq -r '.[] | @base64' | while IFS= read -r window_b64; do
     display_y=$(printf "%.0f" "$display_y")
     display_w=$(printf "%.0f" "$display_w")
     display_h=$(printf "%.0f" "$display_h")
-    
+
     window_right=$((window_x + window_w))
     window_bottom=$((window_y + window_h))
     display_right=$((display_x + display_w))
     display_bottom=$((display_y + display_h))
-    
-    # Check if window is off-screen (using stricter detection)
-    visibility_threshold=50  # Allow only 50 pixels tolerance
-    
+
+    # Determine if window is offscreen
+    # For floating windows (including popovers), we're stricter about negative coords
     off_screen=false
-    issue_desc=""
-    
-    # Check if window extends beyond display boundaries (more precise)
-    # Check if window left edge is too far left of display
-    if [ $window_x -lt $((display_x - visibility_threshold)) ]; then
+    new_x=""
+    new_y=""
+    issue=""
+
+    # Check for completely offscreen (negative or way outside display)
+    if [ $window_x -lt $display_x ]; then
         off_screen=true
-        issue_desc="left edge too far left (x=$window_x, display starts at $display_x)"
+        new_x=$((display_x + 100))
+        issue="left edge offscreen (x=$window_x)"
     fi
-    
-    # Check if window right edge is too far right of display  
-    if [ $window_right -gt $((display_right + visibility_threshold)) ]; then
+
+    if [ $window_y -lt $display_y ]; then
         off_screen=true
-        issue_desc="right edge too far right (right=$window_right, display ends at $display_right)"
+        new_y=$((display_y + 50))
+        issue="$issue top edge offscreen (y=$window_y)"
     fi
-    
-    # Check if window top edge is too far up
-    if [ $window_y -lt $((display_y - visibility_threshold)) ]; then
+
+    # Check if completely off the right side
+    if [ $window_x -gt $display_right ]; then
         off_screen=true
-        issue_desc="top edge too far up (y=$window_y, display starts at $display_y)"
+        new_x=$((display_right - window_w - 100))
+        issue="$issue completely right of display"
     fi
-    
-    # Check if window bottom edge is too far down
-    if [ $window_bottom -gt $((display_bottom + visibility_threshold)) ]; then
+
+    # Check if completely off the bottom
+    if [ $window_y -gt $display_bottom ]; then
         off_screen=true
-        issue_desc="bottom edge too far down (bottom=$window_bottom, display ends at $display_bottom)"
+        new_y=$((display_bottom - window_h - 100))
+        issue="$issue completely below display"
     fi
-    
+
+    # If offscreen, fix it
     if [ "$off_screen" = "true" ]; then
-        echo "🚨 Found off-screen window: $window_app (ID: $window_id) - $issue_desc"
-        echo "   Window: x=$window_x, y=$window_y, w=$window_w, h=$window_h"
-        echo "   Display: x=$display_x, y=$display_y, w=$display_w, h=$display_h"
-        echo "   📍 Rebalancing space $window_space..."
-        
-        # Try multiple fix strategies
-        echo "   🔧 Strategy 1: Focus and rebalance space..."
-        yabai -m window --focus "$window_id" 2>/dev/null
-        yabai -m space "$window_space" --balance 2>/dev/null
-        
-        sleep 0.3
-        echo "   🔧 Strategy 2: Reset window position..."
-        # Try to move window to its proper space/position
-        yabai -m window "$window_id" --toggle float 2>/dev/null || true
-        sleep 0.2
-        yabai -m window "$window_id" --toggle float 2>/dev/null || true
-        
-        sleep 0.2
-        echo "   🔧 Strategy 3: Final rebalance..."
-        yabai -m space "$window_space" --balance 2>/dev/null
-        
-        issues_found=$((issues_found + 1))
+        echo "🚨 FOUND: $window_app (ID: $window_id, Role: $window_role)"
+        echo "   Issue: $issue"
+        echo "   Current: x=$window_x, y=$window_y"
+
+        # Determine new position
+        [ -z "$new_x" ] && new_x=$window_x
+        [ -z "$new_y" ] && new_y=$window_y
+
+        echo "   Moving to: x=$new_x, y=$new_y"
+
+        # For floating windows, use direct positioning
+        if [ "$is_floating" = "true" ]; then
+            yabai -m window "$window_id" --move "abs:$new_x:$new_y" 2>/dev/null && \
+                echo "   ✅ Moved successfully" || \
+                echo "   ❌ Failed to move"
+        else
+            # For tiled windows, toggle float, move, toggle back
+            yabai -m window "$window_id" --toggle float 2>/dev/null
+            sleep 0.1
+            yabai -m window "$window_id" --move "abs:$new_x:$new_y" 2>/dev/null
+            sleep 0.1
+            yabai -m window "$window_id" --toggle float 2>/dev/null && \
+                echo "   ✅ Fixed and re-tiled" || \
+                echo "   ⚠️  Partially fixed"
+        fi
+
+        fixed_count=$((fixed_count + 1))
     fi
 done
 
-if [ $issues_found -eq 0 ]; then
-    echo "✅ No off-screen windows detected!"
+echo ""
+echo "═══════════════════════════════════════"
+if [ $fixed_count -eq 0 ]; then
+    echo "✅ No offscreen windows found!"
 else
-    echo "🔧 Fixed $issues_found off-screen window(s)"
-    echo "💡 If issues persist, try restarting the affected app or yabai"
+    echo "🔧 Fixed $fixed_count offscreen window(s)"
 fi
+
+if [ $skipped_count -gt 0 ]; then
+    echo "⏭️  Skipped $skipped_count window(s) (unmovable or invalid)"
+fi
+echo "═══════════════════════════════════════"
