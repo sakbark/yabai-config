@@ -1,0 +1,226 @@
+# skhd configuration file - Optimized for yabai 7.1.15
+# https://github.com/koekeishiya/skhd
+
+# specify a file that should be included as an additional config-file.
+# treated as an absolutepath if the filename begins with '/' otherwise
+# the file is relative to the path of the config-file it was loaded from.
+
+# .load "/Users/saady/.config/partial_skhdrc"
+# .load "partial_skhdrc"
+
+# prevents skhd from monitoring events for listed processes.
+
+.blacklist [
+    "terminal"
+    "qutebrowser"
+    "kitty"
+    "warp"
+]
+
+# ─── Window Navigation (7.1.15 compatible) ──────────────────────
+# Window selection: j=left, k=right
+alt - j : yabai -m window --focus west || yabai -m window --focus prev || yabai -m window --focus last
+alt - k : yabai -m window --focus east || yabai -m window --focus next || yabai -m window --focus first
+
+# Window resizing: h=increase left, l=increase right
+alt - h : yabai -m window --resize left:-50:0; yabai -m window --resize right:-50:0
+alt - l : yabai -m window --resize right:50:0; yabai -m window --resize left:50:0
+
+# ─── Window Movement (7.1.15 compatible) ────────────────────────
+# Directional swap (works in BSP mode, fallback to warp in float mode)
+shift + alt - h : yabai -m window --swap west || yabai -m window --warp west
+shift + alt - j : yabai -m window --swap south || yabai -m window --warp south
+shift + alt - k : yabai -m window --swap north || yabai -m window --warp north
+shift + alt - l : yabai -m window --swap east || yabai -m window --warp east
+
+# ─── Window Resizing ─────────────────────────────────────────────
+ctrl + alt - h : yabai -m window --resize left:-50:0; yabai -m window --resize right:-50:0
+ctrl + alt - j : yabai -m window --resize bottom:0:50; yabai -m window --resize top:0:50
+ctrl + alt - k : yabai -m window --resize top:0:-50; yabai -m window --resize bottom:0:-50
+ctrl + alt - l : yabai -m window --resize right:50:0; yabai -m window --resize left:50:0
+
+# ─── Window Move to Space (all 10 spaces) ────────────────────────
+# Fixed: Added auto-follow and all 10 spaces
+shift + alt - 1 : yabai -m window --space 1; yabai -m space --focus 1
+shift + alt - 2 : yabai -m window --space 2; yabai -m space --focus 2
+shift + alt - 3 : yabai -m window --space 3; yabai -m space --focus 3
+shift + alt - 4 : yabai -m window --space 4; yabai -m space --focus 4
+shift + alt - 5 : yabai -m window --space 5; yabai -m space --focus 5
+shift + alt - 6 : yabai -m window --space 6; yabai -m space --focus 6
+shift + alt - 7 : yabai -m window --space 7; yabai -m space --focus 7
+shift + alt - 8 : yabai -m window --space 8; yabai -m space --focus 8
+shift + alt - 9 : yabai -m window --space 9; yabai -m space --focus 9
+shift + alt - 0 : yabai -m window --space 10; yabai -m space --focus 10
+
+# ─── Space Navigation (all 10 spaces) ────────────────────────────
+ctrl - 1 : yabai -m space --focus 1
+ctrl - 2 : yabai -m space --focus 2
+ctrl - 3 : yabai -m space --focus 3
+ctrl - 4 : yabai -m space --focus 4
+ctrl - 5 : yabai -m space --focus 5
+ctrl - 6 : yabai -m space --focus 6
+ctrl - 7 : yabai -m space --focus 7
+ctrl - 8 : yabai -m space --focus 8
+ctrl - 9 : yabai -m space --focus 9
+ctrl - 0 : yabai -m space --focus 10
+
+# ─── Display Navigation ───────────────────────────────────────────
+alt - s : yabai -m display --focus next || yabai -m display --focus first
+alt - a : yabai -m display --focus prev || yabai -m display --focus last
+shift + alt - s : yabai -m window --display next; yabai -m display --focus next
+shift + alt - a : yabai -m window --display prev; yabai -m display --focus prev
+
+# ─── Smart Display Toggle ──────────────────────────────────────────
+# Toggle focused window between Ultrawide and MacBook displays
+ctrl + shift - a : ~/.config/skhd/scripts/toggle_display.sh
+
+# ─── Monitor Switch Fix ────────────────────────────────────────────
+# Fix yabai when switching monitor setups (single/multi-monitor)
+ctrl + shift - m : ~/yabai-monitor-fix.sh balance
+
+# ─── Window Operations ───────────────────────────────────────────
+alt - f           : yabai -m window --toggle zoom-fullscreen
+shift + alt - g   : yabai -m window --toggle native-fullscreen
+alt - t           : yabai -m window --toggle float --grid 4:4:1:1:2:2
+alt - r           : yabai -m space --rotate 90
+shift + alt - r   : yabai -m space --rotate 270
+ctrl + alt - 0   : yabai -m space --balance  # Fixed: Changed from shift+alt+0 (conflicts with space 10)
+alt - e           : yabai -m window --toggle split
+alt - w           : yabai -m window --close
+
+# ─── Advanced Floating Controls ───────────────────────────────────
+# Float window with different sizes and positions
+ctrl + alt - t    : yabai -m window --toggle float --grid 6:6:1:1:4:4
+ctrl + shift - t  : yabai -m window --toggle float --grid 8:8:1:1:6:6
+# Center floating window
+alt - c           : yabai -m window --grid 4:4:1:1:2:2
+# Corner positions for floating windows
+ctrl + alt - 1    : yabai -m window --grid 2:2:0:0:1:1  # top-left
+ctrl + alt - 2    : yabai -m window --grid 2:2:1:0:1:1  # top-right
+ctrl + alt - 3    : yabai -m window --grid 2:2:0:1:1:1  # bottom-left
+ctrl + alt - 4    : yabai -m window --grid 2:2:1:1:1:1  # bottom-right
+
+# ─── Stacking Controls (yabai 7.1.15) ────────────────────────────
+# Stack current window with window in direction (7.1.15 compatible syntax)
+shift + ctrl - h  : current_id=$(yabai -m query --windows --window | jq -r '.id') && yabai -m window west --stack $current_id
+shift + ctrl - j  : current_id=$(yabai -m query --windows --window | jq -r '.id') && yabai -m window south --stack $current_id
+shift + ctrl - k  : current_id=$(yabai -m query --windows --window | jq -r '.id') && yabai -m window north --stack $current_id
+shift + ctrl - l  : current_id=$(yabai -m query --windows --window | jq -r '.id') && yabai -m window east --stack $current_id
+# Navigate stack and windows (improved fallback with cycling)
+# In stack layout, cycle through all windows in the space with proper wrapping
+alt - tab         : ~/.config/skhd/scripts/stack_cycle.sh next
+shift + alt - tab : ~/.config/skhd/scripts/stack_cycle.sh prev
+# Unstack window (7.1.15 compatible)
+shift + ctrl - u  : yabai -m window --toggle float && yabai -m window --toggle float
+
+# ─── Yabai Service Control ───────────────────────────────────────
+# Fixed: Changed shortcut to avoid Chrome conflicts on Space 3
+ctrl + cmd + alt - y : yabai --restart-service
+# Alternative restart shortcut (less likely to conflict)
+shift + ctrl + alt - y : yabai --restart-service
+
+# ─── Layout Controls ──────────────────────────────────────────────
+# Toggle column layout (all windows in vertical columns)
+alt + ctrl - c : ~/.config/skhd/scripts/column_layout.sh
+# Toggle between layout modes (updated shortcuts)
+alt + shift - b  : ~/.config/skhd/scripts/switch_to_bsp.sh
+alt + shift - s  : yabai -m space --layout stack
+alt + shift - f  : yabai -m space --layout float
+# Alternative direct commands (no scripts)
+ctrl + shift - b : yabai -m space --layout bsp
+ctrl + shift - s : yabai -m space --layout stack
+ctrl + shift - f : yabai -m space --layout float
+
+# ─── Main Window Controls (75/25 BSP Layout) ──────────────────────
+# Promote window to main position (75% area)
+alt + shift - return : yabai -m window --swap first
+# Apply 75/25 main window layout manually
+alt + ctrl - m : ~/.config/skhd/scripts/main_window_layout.sh
+
+
+# ─── Advanced Window Controls (yabai 7.1.15) ─────────────────────
+# Window insertion point
+shift + ctrl - 1  : yabai -m window --insert north
+shift + ctrl - 2  : yabai -m window --insert east
+shift + ctrl - 3  : yabai -m window --insert south
+shift + ctrl - 4  : yabai -m window --insert west
+
+# Mirror/flip space
+alt + shift - x   : yabai -m space --mirror x-axis
+alt + shift - y   : yabai -m space --mirror y-axis
+
+# Window warp (move and swap)
+ctrl + shift - h  : yabai -m window --warp west
+ctrl + shift - j  : yabai -m window --warp south
+ctrl + shift - k  : yabai -m window --warp north
+ctrl + shift - l  : yabai -m window --warp east
+
+# Window opacity controls
+alt + shift - 9   : yabai -m window --opacity 0.5
+alt + shift - 0   : yabai -m window --opacity 1.0
+
+# Window layer controls
+alt + shift - u   : yabai -m window --layer above
+alt + shift - i   : yabai -m window --layer normal
+alt + shift - o   : yabai -m window --layer below
+
+# Minimize/deminimize (7.1.15 compatible)
+alt - m           : yabai -m window --minimize
+alt + shift - m   : yabai -m window --deminimize
+
+# Sticky window toggle (changed shortcut to avoid conflict with stack layout)
+alt + shift - z   : yabai -m window --toggle sticky
+
+# Topmost window toggle (7.1.15 compatible)
+# Note: topmost may not be supported in all 7.1.15 builds
+alt + shift - t   : yabai -m window --toggle topmost 2>/dev/null || yabai -m window --layer above
+
+# Window pip (picture-in-picture)
+alt + shift - p   : yabai -m window --toggle pip
+
+# ─── Query & Debug Shortcuts ──────────────────────────────────────
+# Quick query current window info (useful for debugging)
+alt + shift - q   : yabai -m query --windows --window | jq
+# Query current space info
+alt + shift - w   : yabai -m query --spaces --space | jq
+# Query all displays
+alt + shift - e   : yabai -m query --displays | jq
+
+# ─── Window Recovery Shortcuts ─────────────────────────────────────
+# Fix off-screen windows (scan all windows)
+alt + shift - f   : ~/.config/yabai/fix_offscreen_windows.sh
+# Emergency: bring current window to center (for stuck windows)
+alt + shift - c   : yabai -m window --grid 4:4:1:1:2:2
+# Emergency: reset current window (toggle float twice to reposition)
+ctrl + alt - r    : yabai -m window --toggle float && sleep 0.2 && yabai -m window --toggle float
+# Clear orange insertion indicators
+ctrl + shift - i  : ~/.config/yabai/clear_indicators.sh
+# Balance current space (fixes most layout issues)  
+ctrl + alt - b    : yabai -m space --balance
+
+# ─── Scratchpad Controls (7.1.15 Feature) ────────────────────────
+# Toggle scratchpads with sticky and floating
+ctrl + alt - return : yabai -m window --toggle scratchpad
+# Old simple scratchpad commands (replaced with toggle scripts below)
+# ctrl + alt - c      : yabai -m window --scratchpad chatgpt && sleep 0.5 && yabai -m window --toggle sticky
+# ctrl + alt - w      : yabai -m window --scratchpad warp && sleep 0.5 && yabai -m window --toggle sticky
+# ctrl + alt - n      : yabai -m window --scratchpad notes && sleep 0.5 && yabai -m window --toggle sticky
+
+# ─── Application Launchers ───────────────────────────────────────
+# Toggle scratchpad apps with custom shortcuts
+cmd + ctrl + alt + shift - s : ~/.config/skhd/scripts/toggle_chatgpt.sh  # ChatGPT scratchpad
+cmd + ctrl + alt + shift - w : ~/.config/skhd/scripts/toggle_warp.sh     # Warp scratchpad
+cmd + ctrl + alt + shift - n : ~/.config/skhd/scripts/toggle_notes.sh    # Notes scratchpad
+cmd + ctrl + alt + shift - a : ~/.config/skhd/scripts/toggle_todoist.sh  # Todoist scratchpad
+# Regular app launchers
+# cmd - return        : open -na /Applications/Warp.app  # REMOVED
+cmd + shift - return: open -na /Applications/Finder.app
+cmd + shift - i     : open -na "iPhone Mirroring" && sleep 0.5 && yabai -m window --toggle sticky
+
+# ─── Sequential Navigation (Bonus) ───────────────────────────────
+# Cycle through spaces sequentially
+alt - left        : yabai -m space --focus prev || yabai -m space --focus last
+alt - right       : yabai -m space --focus next || yabai -m space --focus first
+# Move window to prev/next space
+shift + alt - left  : yabai -m window --space prev; yabai -m space --focus prev
+shift + alt - right : yabai -m window --space next; yabai -m space --focus next

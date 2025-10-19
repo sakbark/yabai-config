@@ -1,0 +1,133 @@
+#!/usr/bin/env sh
+
+# ═══════════════════════════════════════════════════════════════════════════
+# YABAI CONFIGURATION - STABLE MULTI-MONITOR SETUP (NO AUTO-RESTART)
+# ═══════════════════════════════════════════════════════════════════════════
+
+echo "🚀 Loading yabai configuration..."
+
+# ─── Scripting Addition Setup (Official) ───────────────────────────────────
+yabai -m signal --add event=dock_did_restart action="sudo yabai --load-sa"
+sudo yabai --load-sa
+
+# ─── Display Change Handling ────────────────────────────────────────────────
+# Handle display changes gracefully by temporarily disabling auto-balance
+# This prevents hanging when switching between single/multi-monitor setups
+yabai -m signal --add event=display_added action="~/.config/yabai/handle-display-change.sh"
+yabai -m signal --add event=display_removed action="~/.config/yabai/handle-display-change.sh"
+yabai -m signal --add event=display_changed action="~/.config/yabai/handle-display-change.sh"
+
+# ─── Smart Event-Based Balancing ────────────────────────────────────────────
+# Balance only when windows are created or destroyed (not on every move/focus!)
+# NOTE: window_moved was removed because it fires on EVERY focus change, causing lag
+# Window creation handler: switches to space and focuses window for app assignments
+yabai -m signal --add event=window_created action="~/.config/yabai/on-window-created.sh"
+yabai -m signal --add event=window_destroyed action="yabai -m space --balance"
+
+# ─── Basic Layout Configuration ─────────────────────────────────────────
+yabai -m config layout                 bsp
+yabai -m config split_ratio            0.50
+yabai -m config auto_balance           off
+yabai -m config window_placement       second_child
+
+# ─── Visual Settings ─────────────────────────────────────────────────────
+yabai -m config window_gap            6
+yabai -m config top_padding           6
+yabai -m config bottom_padding        6
+yabai -m config left_padding          6
+yabai -m config right_padding         6
+yabai -m config window_shadow         on
+yabai -m config window_opacity        off
+
+# ─── Mouse Behavior ─────────────────────────────────────────────────────
+# NOTE: Having both focus_follows_mouse and mouse_follows_focus enabled
+# creates a feedback loop that causes lag, especially with multiple monitors
+yabai -m config focus_follows_mouse   autofocus
+yabai -m config mouse_follows_focus   off
+yabai -m config mouse_modifier        fn
+yabai -m config mouse_action1         move
+yabai -m config mouse_action2         resize
+
+# ─── Default Space for New Windows ──────────────────────────────────────
+yabai -m config window_origin_display    default
+yabai -m space 4 --label "Development"
+
+# ─── Simple Display Detection & Labeling ──────────────────────────────────
+echo "🎨 Labeling displays..."
+
+# Get display count
+DISPLAY_COUNT=$(yabai -m query --displays | jq length)
+echo "📊 Detected $DISPLAY_COUNT displays"
+
+# Simple display labeling without complex logic
+yabai -m display 1 --label "Main" 2>/dev/null || true
+yabai -m display 2 --label "Secondary" 2>/dev/null || true  
+yabai -m display 3 --label "Third" 2>/dev/null || true
+
+# ─── System Exclusions ─────────────────────────────────────────────────────
+echo "🔧 Setting up system exclusions..."
+yabai -m rule --add app=".*" manage=off subrole=AXSystemDialog
+yabai -m rule --add app=".*" manage=off subrole=AXDialog
+yabai -m rule --add app=".*" manage=off role=AXPopover
+
+# ─── App Space Assignments ──────────────────────────────────────────────────
+echo "📱 Setting up app assignments..."
+
+# Space 1 - Productivity & Work Apps
+yabai -m rule --add app="^Conduit$" space=1
+yabai -m rule --add app="^Helpdesk  Pass the Keys$" space=1
+yabai -m rule --add app="^Nfc Ideas$" space=1
+yabai -m rule --add app="^Spark Desktop$" space=1
+yabai -m rule --add app="^Todoist$" space=1
+
+# Space 2 - Communication Apps
+yabai -m rule --add app="^Google Chat$" space=2
+yabai -m rule --add app="^Messages$" space=2
+yabai -m rule --add app="^Messenger$" space=2
+yabai -m rule --add app="^‎WhatsApp$" space=2
+
+# Space 3 - Browser
+yabai -m rule --add app="^Google Chrome$" space=3
+
+# Space 4 - Development & System Tools
+yabai -m rule --add app="^Reclaim$" space=4
+yabai -m rule --add app="^Warp$" space=4
+yabai -m rule --add app="^Home Assistant$" space=4
+yabai -m rule --add app="^Loopback$" space=4
+
+# ─── Simple Display Assignments ──────────────────────────────────────────────
+echo "🖥️  Setting up display assignments..."
+
+# Only add display assignments if we have multiple displays
+if [ "$DISPLAY_COUNT" -gt 1 ]; then
+    # Put ChatMate on the third display (MacBook) if available
+    if [ "$DISPLAY_COUNT" -ge 3 ]; then
+        yabai -m rule --add app="^ChatMate Pro for WhatsApp$" display=3 2>/dev/null || true
+    fi
+    
+    # Put Fantastical on secondary display if available
+    yabai -m rule --add app="^Fantastical$" display=2 2>/dev/null || true
+fi
+
+# ─── Floating & Sticky Apps ─────────────────────────────────────────────────
+echo "⚙️  Configuring floating and sticky apps..."
+
+# Always floating and sticky
+yabai -m rule --add app="^ChatGPT$" manage=off sticky=on grid=10:10:3:3:4:4
+yabai -m rule --add app="^Bitwarden$" manage=off sticky=on
+yabai -m rule --add app="^Google Meet$" manage=off sticky=on
+yabai -m rule --add app="^System Settings$" manage=off sticky=on
+yabai -m rule --add app="^iPhone Mirroring$" manage=off sticky=on
+yabai -m rule --add app="^FaceTime$" manage=off sticky=on
+yabai -m rule --add app="^Calculator$" manage=off
+
+echo "✅ Yabai configuration loaded successfully!"
+echo "📍 Space assignments:"
+echo "   🎯 Space 1: Productivity (Conduit, Helpdesk, Nfc Ideas, Spark, Todoist)"
+echo "   💬 Space 2: Communication (Google Chat, Messages, Messenger, WhatsApp)" 
+echo "   🌐 Space 3: Browser (Google Chrome)"
+echo "   ⚡ Space 4: Development (Reclaim, Warp, Home Assistant, Loopback)"
+echo "🖥️ Display assignments:"
+echo "   📱 ChatMate → Third display (if available)"
+echo "   📅 Fantastical → Secondary display (if available)"
+echo "🎈 Floating/Sticky: ChatGPT, Bitwarden, Google Meet, System Settings, iPhone Mirroring"

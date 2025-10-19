@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+*.log
+*.out
+
+# Temporary files
+*.tmp
+*.swp
+*~
+
+# Backup files
+*_backup_*
+*.backup
