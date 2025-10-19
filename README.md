@@ -126,13 +126,26 @@ Automatically switches to the space where an already-running app is located when
 **Example:** If Chrome is running on Space 3 and you're on Space 1, clicking Chrome in the Dock will automatically switch you to Space 3.
 
 ### `handle-display-change.sh`
-Gracefully handles display connection/disconnection events, preventing yabai from hanging during monitor changes.
+Gracefully handles display connection/disconnection events, preventing yabai from hanging during monitor changes. **Automatically runs `fix_offscreen_windows.sh`** after display changes to fix any windows that went offscreen.
+
+### `fix_offscreen_windows.sh`
+Detects and fixes windows with negative coordinates or positioned beyond display boundaries. Handles both tiled and floating windows.
+
+**Runs automatically when:**
+- Display connected/disconnected
+- Monitor configuration changes
+
+**Manual trigger:**
+- Keyboard: `alt + shift + f`
+- Command: `~/.config/yabai/fix_offscreen_windows.sh`
+
+**Common when:**
+- Disconnecting external monitors
+- Menubar popover apps on secondary displays
+- Resolution changes
 
 ### `clear_indicators.sh`
 Clears yabai's window indicators (useful for debugging).
-
-### `fix_offscreen_windows.sh`
-Repairs windows that are stuck offscreen or between spaces.
 
 ## Usage Tips
 
