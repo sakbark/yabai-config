@@ -12,6 +12,8 @@ Complete macOS window management setup using [yabai](https://github.com/koekeish
 - **Smart Scratchpad System** - Quick-access floating windows
 - **Keyboard-Driven Workflow** - Comprehensive keybindings for window management
 
+**📋 [View Testing & Debugging Report](TESTING.md)** - Comprehensive test results and validation
+
 ## Quick Start
 
 ### Prerequisites
