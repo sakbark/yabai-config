@@ -8,6 +8,7 @@ Complete macOS window management setup using [yabai](https://github.com/koekeish
 - **Multi-Monitor Support** - Smart display detection and handling
 - **App Space Assignments** - Automatic workspace organization
 - **Auto Focus on Window Creation** - Seamlessly switches to new windows when apps open
+- **Auto Focus on App Activation** - Automatically switches to already-running apps' spaces
 - **Smart Scratchpad System** - Quick-access floating windows
 - **Keyboard-Driven Workflow** - Comprehensive keybindings for window management
 
@@ -43,6 +44,7 @@ brew install jq
 
    # Copy helper scripts
    cp on-window-created.sh ~/.config/yabai/
+   cp on-app-activated.sh ~/.config/yabai/
    cp handle-display-change.sh ~/.config/yabai/
    cp clear_indicators.sh ~/.config/yabai/
    cp fix_offscreen_windows.sh ~/.config/yabai/
@@ -110,7 +112,16 @@ brew install jq
 ## Helper Scripts
 
 ### `on-window-created.sh`
-Automatically switches to the space where a new window is created and focuses it. This makes app space assignments seamless - when you open Todoist from anywhere, it opens on Space 1 and automatically switches you there.
+Automatically switches to the space where a new window is created and focuses it. This makes app space assignments seamless - when you open a new window for an app, it opens on its assigned space and automatically switches you there.
+
+**Triggers on:** New window creation (e.g., launching an app for the first time, creating a new window)
+
+### `on-app-activated.sh`
+Automatically switches to the space where an already-running app is located when you activate it. This makes it seamless to switch between apps - just click an app in the Dock or use Spotlight, and yabai automatically takes you to the space where that app lives.
+
+**Triggers on:** App activation (e.g., clicking app in Dock, using Spotlight/Alfred, Cmd+Tab)
+
+**Example:** If Chrome is running on Space 3 and you're on Space 1, clicking Chrome in the Dock will automatically switch you to Space 3.
 
 ### `handle-display-change.sh`
 Gracefully handles display connection/disconnection events, preventing yabai from hanging during monitor changes.
