@@ -17,12 +17,16 @@ yabai -m signal --add event=display_added action="~/.config/yabai/handle-display
 yabai -m signal --add event=display_removed action="~/.config/yabai/handle-display-change.sh"
 yabai -m signal --add event=display_changed action="~/.config/yabai/handle-display-change.sh"
 
-# ─── Smart Event-Based Balancing ────────────────────────────────────────────
+# ─── Smart Event-Based Balancing & Auto-Focus ──────────────────────────────
 # Balance only when windows are created or destroyed (not on every move/focus!)
 # NOTE: window_moved was removed because it fires on EVERY focus change, causing lag
 # Window creation handler: switches to space and focuses window for app assignments
 yabai -m signal --add event=window_created action="~/.config/yabai/on-window-created.sh"
 yabai -m signal --add event=window_destroyed action="yabai -m space --balance"
+
+# App activation handler: switches to space when activating already-running apps
+# This makes clicking apps in Dock or Spotlight seamlessly switch to their space
+yabai -m signal --add event=application_activated action="~/.config/yabai/on-app-activated.sh"
 
 # ─── Basic Layout Configuration ─────────────────────────────────────────
 yabai -m config layout                 bsp
