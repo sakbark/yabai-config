@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Emergency script to clear orange insertion indicators
 echo "🧹 Clearing all insertion indicators..."

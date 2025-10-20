@@ -207,6 +207,39 @@ Then add a scratchpad rule in `yabairc`:
 yabai -m rule --add app="^Your App$" manage=off sticky=on scratchpad=yourapp
 ```
 
+## Debugging & Validation
+
+### Comprehensive Debug Script
+
+Run the comprehensive debug script to validate all yabai automation:
+
+```bash
+~/.config/yabai/debug-all-scripts.sh
+```
+
+**What it checks:**
+- ✅ All dependencies installed (yabai, skhd, jq)
+- ✅ All scripts have correct permissions
+- ✅ All signals properly registered
+- ✅ Functional tests (queries, offscreen detection)
+- ✅ Performance metrics
+- ✅ Log file analysis
+- ✅ Edge case validation
+
+**Output:**
+- Real-time console output with color-coded results
+- Full report saved to `/tmp/yabai-debug-report-*.log`
+
+**When to run:**
+- After initial setup
+- After making configuration changes
+- When troubleshooting issues
+- Monthly validation check
+
+**📋 See [DEBUG-REPORT.md](DEBUG-REPORT.md) for full validation results**
+
+---
+
 ## Troubleshooting
 
 ### Services Not Starting
